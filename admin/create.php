@@ -1,20 +1,27 @@
 <?php
-include '../db.php/db.php';
+session_start();
+include '../includes/db.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $film = $_POST['film'];
     $genre = $_POST['genre'];
     $actors = $_POST['actors'];
     $directors = $_POST['directors'];
+    $image = $_FILES['image']['name'];
+    $target = "../assets/img/". basename($image);
 
-    $sql = "INSERT INTO film (film, genre, actors, directors) VALUES ('$film', '$genre', '$actors', '$directors')";
-    if ($conn->query($sql) === TRUE) {
-        echo "New film record created successfully";
+    $sql = "INSERT INTO movies (film, genre, actors, directors, image) VALUES ('$film', '$genre', '$actors', '$directors', '$image')";
+
+    if (mysql_query($conn, $sql)) {
+        if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
+            echo "film berhasil ditambahkan dan gambar diunggah. ";
+        } else {
+            echo "Film berhasil ditambahkan tetapi gagal mengunggah gambar . ";
+        }
+        header("Location: ../index.php");
     } else {
-        echo "Error: " . $sql . "<br>" . $conn->error;
+        echo "kesalahan: " . $sql . "<br>" . mysqli_error($conn);
     }
-
-    $conn->close();
 }
 ?>
 
@@ -26,18 +33,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <title>Create Film</title>
 </head>
 <body>
-    <h2>Create New Film</h2>
-    <form method="POST" action="create.php">
+    <h2>Update Film</h2>
+    <form action="update.php" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="id" value="<?php echo $film['id']; ?>">
         <label for="film">Film:</label><br>
         <input type="text" id="film" name="film"><br>
+        
         <label for="genre">Genre:</label><br>
         <input type="text" id="genre" name="genre"><br>
+
         <label for="actors">Actors:</label><br>
         <input type="text" id="actors" name="actors"><br>
+
         <label for="directors">Directors:</label><br>
         <input type="text" id="directors" name="directors"><br>
-        <input type="submit" value="Submit">
+
+        <label for="image">Image:</label><br>
+        <input type="text" id="image" name="image"><br>
+
+        <input type="submit" value="Update film">
     </form>
-    <a href="../read.php/read.php">View Films</a>    
+
 </body>
 </html>

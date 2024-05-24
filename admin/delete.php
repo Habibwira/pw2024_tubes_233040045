@@ -1,21 +1,14 @@
 <?php
-include 'db.php'
+session_start();
+include '../includes/db.php';
 
-
-if(isset($_GET["id"])) {
+if(isset($_GET['id'])) {
     $id = $_GET['id'];
-
-    $sql = "DELETE FROM films WHERE id='$id'";
-
-    if ($conn->query($sql) === TRUE) {
-        echo "Record deleted succcesfully";
+    $sql = "DELETE FROM movies WHERE id=$id";
+    if (mysqli_query($conn, $sql)) {
+        header("Location: ../index.php");
     } else {
-        echo "Error deleting record: " . $conn->error;
+        echo "Kesalahan: " . mysqli_error($conn);
     }
-
-    $conn->close();
-    header("Location: read.php");
-} else {
-    echo "Invalid ID";
 }
 ?>

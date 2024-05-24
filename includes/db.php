@@ -5,10 +5,10 @@ $password = "";
 $dbname = "pw2024_tubes_233040045"; 
 
 // create connection
-$conn = new mysqli($servername, $username, $password, $dbname); 
+$conn = mysqli_connect($servername, $username, $password, $dbname); 
 
 // check connection
-if ($conn->connect_error) {
-    die("Koneksi gagal: " . $conn->connect_error);
+if (!$conn) {
+    die("Koneksi gagal: " . mysqli_connect_error());
 }
 ?>
