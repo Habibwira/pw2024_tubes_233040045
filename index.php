@@ -1,24 +1,25 @@
 <?php
-// Memulai sesi
-session_start();
-
-// Mengimpor file koneksi database
+include 'includes/session.php';
 include 'includes/db.php';
 
-// Memeriksa apakah tabel 'films' ada
-$checkTable = "SHOW TABLES LIKE 'movies'";
-$tableExists = mysqli_query($conn, $checkTable);
-
-if (mysqli_num_rows($tableExists) == 0) {
-    echo "Tidak ada data film yang tersedia saat ini";
+// Mendapatkan data film dari database dengan fitur pencarian
+$search = "";
+if (isset($_GET['search'])) {
+    $search = $_GET['search'];
+    $stmt = $conn->prepare("SELECT * FROM movies WHERE film LIKE ? OR genre LIKE ? OR actors LIKE ? OR directors LIKE ?");
+    $search_param = '%' . $search . '%';
+    $stmt->bind_param('ssss', $search_param, $search_param, $search_param, $search_param);
 } else {
-    // Mendapatkan data film dari database
-    $sql = "SELECT * FROM movies";
-    $result = mysqli_query($conn, $sql);
-    if (!$result) {
-        die("Kesalahan dalam query: " . mysqli_error($conn));
-    }
+    $stmt = $conn->prepare("SELECT * FROM movies");
 }
+
+$stmt->execute();
+$result = $stmt->get_result();
+if (!$result) {
+    die("Kesalahan dalam query: " . $conn->error);
+}
+
+$isAdmin = isAdmin();
 ?>
 
 
@@ -28,7 +29,7 @@ if (mysqli_num_rows($tableExists) == 0) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CineVerse</title>
-    <link rel="stylesheet" href="assets/style.css" />
+    <link rel="stylesheet" href="assets/style.css">
     <link rel="stylesheet" href="https://unpkg.com/boxicons@latest/css/boxicons.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -45,94 +46,127 @@ if (mysqli_num_rows($tableExists) == 0) {
         <li><a href="#menu">Menu</a></li>
         <li><a href="#services">Services</a></li>
         <li><a href="#contact">Contact</a></li>
+        <?php if ($isAdmin): ?>
+            <li><a href="admin/create.php">Add film</a></li>        
+            <li><a href="logout.php">Logout</a></li>
+        <?php else: ?>
+            <li><a href="login.php">Login</a></li>
+        <?php endif; ?>
     </ul>
 </header>
 
-<!-------home start------->
-<section class="home" id="home">
-    <div class="home-text">
-        <h1>Cineverse</h1>
-        <h2>Rangkuman <br> Film </h2>
-        <a href="#" class="btn">Chit Chat</a>
-    </div>
+<?php if ($isAdmin): ?>
+    <!-- Halaman Admin -->
+    <section class="admin">
+        <h1>Admin Panel</h1>
+        <form method="GET" action="index.php">
+            <input type="text" name="search" placeholder="Cari film..." value="<?php echo htmlspecialchars($search); ?>">
+            <input type="submit" value="Cari">
+        </form>
 
-    <div class="home-img">
-        <img src="assets/img/cinemalogo.jpg" alt="cinema logo">
-    </div>
-</section>
+        <div class="menu-container">
+            <?php if ($result && $result->num_rows > 0): ?>
+                <?php while ($film = $result->fetch_assoc()): ?>
+                    <div class="box">
+                        <div class="box-img">
+                            <a href="detail.php?id=<?php echo $film['id']; ?>">Detail</a>
+                            <img src="assets/img/<?php echo htmlspecialchars($film['image']); ?>" alt="Movie Image">
+                        </div>
+                        <h2><?php echo htmlspecialchars($film['film']); ?></h2>
+                        <h3><?php echo htmlspecialchars($film['directors']); ?></h3>
+                        <span><?php echo htmlspecialchars($film['genre']); ?></span>
+                        <a href="admin/update.php?id=<?php echo $film['id']; ?>">Edit</a>
+                        <a href="admin/delete.php?id=<?php echo $film['id']; ?>" onclick="return confirm('Apakah anda yakin ingin menghapus film ini?')">Delete</a>
+                    </div>
+                <?php endwhile; ?>
+            <?php else: ?>
+                <p>Tidak ada data film yang tersedia saat ini.</p>
+            <?php endif; ?>
+        </div>
+    </section>
 
-<!-------about start------->
-<section class="about" id="about">
-    <div class="about-img">
-        <img src="assets/img/clapperboard.jpg" alt="Clapperboard">
-    </div>
+<?php else: ?>
+    <!-- Halaman Pengunjung -->
+    <section class="home" id="home">
+        <div class="home-text">
+            <h1>Cineverse</h1>
+            <h2>Rangkuman <br> Film </h2>
+            <a href="#" class="btn">Chit Chat</a>
+        </div>
+        <div class="home-img">
+            <img src="assets/img/cinemalogo.jpg" alt="cinema logo">
+        </div>
+    </section>
 
-    <div class="about-text">
-        <span>About Us</span>
-        <h2>We gathered the <br> film enthusiast</h2>
-        <P>"Di mata seorang film enthusiast, setiap film adalah sebuah karya seni yang menunggu untuk ditemukan dan dinikmati sepenuhnya."</P>
-        <a href="#" class="btn">Learn More</a>
+    <form method="GET" action="index.php">
+        <input type="text" name="search" placeholder="Cari film..." value="<?php echo htmlspecialchars($search); ?>">
+        <input type="submit" value="Cari">
+    </form>
 
-    </div>
-</section>
+    <!-- About Section -->
+    <section class="about" id="about">
+        <div class="about-img">
+            <img src="assets/img/clapperboard.jpg" alt="Clapperboard">
+        </div>
+        <div class="about-text">
+            <span>About Us</span>
+            <h2>We gathered the <br> film enthusiast</h2>
+            <p>"Di mata seorang film enthusiast, setiap film adalah sebuah karya seni yang menunggu untuk ditemukan dan dinikmati sepenuhnya."</p>
+            <a href="#" class="btn">Learn More</a>
+        </div>
+    </section>
 
-<!-------menu start------->
-<section class="menu" id="menu">
-    <div class="heading">
-        <span>Movies List</span>
-        <h2>Great Movie, Great Mood</h2>
-    </div>
+    <!-- Menu Section -->
+    <section class="menu" id="menu">
+        <div class="heading">
+            <span>Movies List</span>
+            <h2>Great Movie, Great Mood</h2>
+        </div>
+        <div class="menu-container">
+            <?php if ($result && $result->num_rows > 0): ?>
+                <?php while ($film = $result->fetch_assoc()): ?>
+                    <div class="box">
+                        <div class="box-img">
+                            <a href="detail.php?id=<?php echo $film['id']; ?>">Detail</a>
+                            <img src="assets/img/<?php echo htmlspecialchars($film['image']); ?>" alt="Movie Image">
+                        </div>
+                        <h2><?php echo htmlspecialchars($film['film']); ?></h2>
+                        <h3><?php echo htmlspecialchars($film['directors']); ?></h3>
+                        <span><?php echo htmlspecialchars($film['genre']); ?></span>
+                    </div>
+                <?php endwhile; ?>
+            <?php else: ?>
+                <p>Tidak ada data film yang tersedia saat ini.</p>
+            <?php endif; ?>
+        </div>
+    </section>
 
-    <div class="menu-container">
-        <a href="admin/create.php">Add film</a>
-        <?php if ($result && mysqli_num_rows($result) > 0) {
-            while ($film = mysqli_fetch_assoc($result)) { ?>
-                <div class="box">
-                    <div class="box-img">
-                        <img src="assets/img/<?php echo $film['image']; ?>" alt="Movie Image">
-                </div>
-                <h2><?php echo $film['film']; ?></h2>
-                <h3><?php echo $film['directors']; ?></h3>
-                <span><?php echo $film['id']; ?></span>
-                <a href="admin/update.php?id=<?php echo $film['id']; ?>">Edit</a>
-                <a href="admin/delete.php?id=<?php echo $film['id']; ?>" onclick="return confirm('Apakah anda yakin ingin menghapus film ini?')">Delete</a>
-
+    <!-- Services Section -->
+    <section class="services" id="services">
+        <div class="heading">
+            <span>Services</span>
+            <h2>We have collected some good films</h2>
+        </div>
+        <div class="service-container">
+            <div class="s-box">
+                <img src="assets/img/director.png" alt="Director">
+                <h3>Director</h3>
+                <p>Orang yang bertugas mengarahkan sebuah film sesuai dengan manuskrip, pembuat film juga digunakan untuk merujuk pada produser film. Manuskrip skenario digunakan untuk mengontrol aspek-aspek seni dan drama. Pada masa yang sama, sutradara mengawal petugas atau pekerja teknik dan pemeran untuk memenuhi wawasan pengarahannya. Seorang sutradara juga berperan dalam membimbing kru teknisi dan para pemeran film dalam merealisasikan kreativitas yang dimilikinya.</p>
             </div>
-        <?php }
-        } else {
-            echo "<p>Tidak ada data film yang tersedia saat ini.</p>";
-        } ?>     
-    </div>
-</section>
-
-<section class="services" id="services">
-    <div class="heading">
-        <span>Services</span>
-        <h2>We have collected some good films</h2>
-    </div>
-
-    <div class="service-container">
-        <div class="s-box">
-            <img src="assets/img/director.png">
-            <h3>Director</h3>
-            <P>orang yang bertugas mengarahkan sebuah film sesuai dengan manuskrip, pembuat film juga digunakan untuk merujuk pada produser film. Manuskrip skenario digunakan untuk mengontrol aspek-aspek seni dan drama. Pada masa yang sama, sutradara mengawal petugas atau pekerja teknik dan pemeran untuk memenuhi wawasan pengarahannya. Seorang sutradara juga berperan dalam membimbing kru teknisi dan para pemeran film dalam merealisasikan kreativitas yang dimilikinya.</P>
+            <div class="s-box2">
+                <img src="assets/img/universal.png" alt="Universal">
+                <h3>Produced By</h3>
+                <p>Universal Pictures (juga dikenal sebagai Universal Studios, dan sebelumnya Universal Manufacturing Company) adalah studio film Amerika yang dimiliki oleh Comcast melalui divisi Universal Filmed Entertainment Group dari anak perusahaannya yang sepenuhnya dimiliki NBCUniversal.</p>
+            </div>
+            <div class="s-box">
+                <img src="assets/img/usanobg.png" alt="Country">
+                <h3>Country</h3>
+                <p>USA adalah negara republik konstitutional federal yang terdiri dari lima puluh negara bagian dan sebuah distrik federal dan usa merupakan salah satu negara dengan industri film terbesar di dunia.</p>
+            </div>
         </div>
+    </section>
 
-        <div class="s-box2">
-            <img src="assets/img/universal.png">
-            <h3>Produced By</h3>
-            <P>Universal Pictures (juga dikenal sebagai Universal Studios, dan sebelumnya Universal Manufacturing Company) adalah studio film Amerika yang dimiliki oleh Comcast melalui divisi Universal Filmed Entertainment Group dari anak perusahaannya yang sepenuhnya dimiliki NBCUniversal.</P>
-        </div>
-
-        <div class="s-box">
-            <img src="assets/img/usanobg.png">
-            <h3>Country</h3>
-            <P>USA adalah negara republik konstitutional federal yang terdiri dari lima puluh negara bagian dan sebuah distrik federal dan usa merupakan salah satu negara dengan industri film terbesar di dunia</P>
-        </div>
-    </div>
-</section>
-
-
+<?php endif; ?>
 
 <!-------call to action------->
 <section class="cta">
@@ -157,9 +191,5 @@ if (mysqli_num_rows($tableExists) == 0) {
         </div>
     </div>
 </section>
-
-
-<!-------footer start------->
-<script type="text/javascript" src="assets/script.js"></script>
 </body>
 </html>

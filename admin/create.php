@@ -1,26 +1,45 @@
 <?php
-session_start();
+include '../includes/session.php';
 include '../includes/db.php';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $film = $_POST['film'];
-    $genre = $_POST['genre'];
-    $actors = $_POST['actors'];
-    $directors = $_POST['directors'];
+// Hanya admin yang bisa mengakses halaman ini
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    die("Anda tidak memiliki akses ke halaman ini.");
+}
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $film = mysqli_real_escape_string($conn, $_POST['film']);
+    $genre = mysqli_real_escape_string($conn, $_POST['genre']);
+    $directors = mysqli_real_escape_string($conn, $_POST['directors']);
+    $actors = mysqli_real_escape_string($conn, $_POST['actors']);
     $image = $_FILES['image']['name'];
-    $target = "../assets/img/". basename($image);
 
-    $sql = "INSERT INTO movies (film, genre, actors, directors, image) VALUES ('$film', '$genre', '$actors', '$directors', '$image')";
+    $target = "../assets/img/" . basename($image);
 
-    if (mysql_query($conn, $sql)) {
-        if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
-            echo "film berhasil ditambahkan dan gambar diunggah. ";
-        } else {
-            echo "Film berhasil ditambahkan tetapi gagal mengunggah gambar . ";
-        }
-        header("Location: ../index.php");
+    // Validasi form
+    if (empty($film) || empty($genre) || empty($directors) || empty($actors) || empty($image)) {
+        echo "Semua kolom harus diisi.";
     } else {
-        echo "kesalahan: " . $sql . "<br>" . mysqli_error($conn);
+        // Cek apakah film sudah ada dalam tabel
+        $checkQuery = "SELECT * FROM movies WHERE film='$film'";
+        $checkResult = mysqli_query($conn, $checkQuery);
+        if (mysqli_num_rows($checkResult) > 0) {
+            echo "Film sudah ada dalam database.";
+        } else {
+            // Jika tidak ada film dengan nama yang sama, lakukan penyisipan data
+            if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
+                $query = "INSERT INTO movies (film, genre, directors, actors, image) VALUES ('$film', '$genre', '$directors', '$actors', '$image')";
+                if (mysqli_query($conn, $query)) {
+                    echo "Film berhasil ditambahkan.";
+                    header('Location: ../index.php');
+                    exit;
+                } else {
+                    echo "Kesalahan dalam menambah film: " . mysqli_error($conn);
+                }
+            } else {
+                echo "Gagal mengupload gambar.";
+            }
+        }
     }
 }
 ?>
@@ -30,29 +49,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Film</title>
+    <title>Tambah Film</title>
+    <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
-    <h2>Update Film</h2>
-    <form action="update.php" method="post" enctype="multipart/form-data">
-        <input type="hidden" name="id" value="<?php echo $film['id']; ?>">
+    <form method="POST" action="create.php" enctype="multipart/form-data">
         <label for="film">Film:</label><br>
-        <input type="text" id="film" name="film"><br>
+        <input type="text" id="film" name="film" required><br>
         
         <label for="genre">Genre:</label><br>
-        <input type="text" id="genre" name="genre"><br>
+        <input type="text" id="genre" name="genre" required><br>
 
         <label for="actors">Actors:</label><br>
-        <input type="text" id="actors" name="actors"><br>
+        <input type="text" id="actors" name="actors" required><br>
 
         <label for="directors">Directors:</label><br>
-        <input type="text" id="directors" name="directors"><br>
+        <input type="text" id="directors" name="directors" required><br>
 
         <label for="image">Image:</label><br>
-        <input type="text" id="image" name="image"><br>
+        <input type="file" name="image" id="image" required><br><br>
 
-        <input type="submit" value="Update film">
+        <button type="submit">Submit</button>
     </form>
-
 </body>
 </html>

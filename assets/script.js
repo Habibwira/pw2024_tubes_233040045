@@ -8,3 +8,8 @@ menu.addEventListener("click", function () {
 window.onscroll = () => {
     navbar.classList.remove("active");
 };
+
+document.getElementById('menu_icon').addEventListener('click', function () {
+    var navbar = document.querySelector('.navbar');
+    navbar.classList.toggle('active');
+});

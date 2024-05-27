@@ -1,6 +1,13 @@
 <?php
 session_start();
 
+function requireLogin() {
+    if (!isset($_SESSION['loggedin']) || !$_SESSION['loggedin']) {
+        header("Location: ../login.php");
+        exit();
+    }
+}
+
 include 'db.php';
 
 // Function to check if user is logged in
@@ -70,5 +77,7 @@ function register($username, $email, $password){
         return false;
     }
 }
+
+requireLogin();
 ?>
 

@@ -1,14 +1,15 @@
 <?php
+// Define database connection variables
 $servername = "localhost";
-$username = "root"; 
-$password = ""; 
-$dbname = "pw2024_tubes_233040045"; 
+$username = "root"; // Sesuaikan dengan username MySQL Anda
+$password = ""; // Sesuaikan dengan password MySQL Anda
+$dbname = "pw2024_tubes_233040045"; // Ganti dengan nama database Anda
 
-// create connection
-$conn = mysqli_connect($servername, $username, $password, $dbname); 
+// Create connection
+$conn = new mysqli($servername, $username, $password, $dbname);
 
-// check connection
-if (!$conn) {
-    die("Koneksi gagal: " . mysqli_connect_error());
+// Check connection
+if ($conn->connect_error) {
+    die("Koneksi gagal: " . $conn->connect_error);
 }
 ?>

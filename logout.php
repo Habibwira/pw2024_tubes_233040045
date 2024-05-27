@@ -1,6 +1,12 @@
 <?php
-// Clear session or logout logic
+session_start();
+session_unset();
+session_destroy();
+header("Location: login.php");
+exit();
+
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

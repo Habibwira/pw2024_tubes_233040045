@@ -1,48 +1,58 @@
 <?php
-session_start();
+include '../includes/session.php';
 include '../includes/db.php';
 
 if (isset($_GET['id'])) {
-    $id = intval($_GET['id']);
-    $sql = "SELECT * FROM movies WHERE id = $id";
-    $result = mysqli_query($conn, $sql);
+    $id = $_GET['id'];
+    $query = "SELECT * FROM movies WHERE id = $id";
+    $result = mysqli_query($conn, $query);
     $film = mysqli_fetch_assoc($result);
-
-    if (!$film) {
-        die("Film tidak dapat ditemukan dengan ID: $id ");
-    }
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $id = intval($_POST['id']);
-    $film = mysqlii_real_escape_string($conn, $_POST['film']);
-    $genre = mysqlii_real_escape_string($conn, $_POST['genre']);
-    $actors = mysqlii_real_escape_string($conn, $_POST['actors']);
-    $directors = mysqlii_real_escape_string($conn, $_POST['directors']);
-    $image = mysqlii_real_escape_string($conn, $_POST['image']);
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $id = $_POST['id'];
+    $film = mysqli_real_escape_string($conn, $_POST['film']);
+    $genre = mysqli_real_escape_string($conn, $_POST['genre']);
+    $directors = mysqli_real_escape_string($conn, $_POST['directors']);
+    $actors = mysqli_real_escape_string($conn, $_POST['actors']);
 
-    $sql = "UPDATE movies SET film='$film', genre='$genre', actors='$actors', directors='$directors', image='$image' WHERE id = $id";
-    $result = mysqli_query($conn, $sql);
+    // Check if a new image file is uploaded
+    if ($_FILES['image']['size'] > 0) {
+        $image = $_FILES['image']['name'];
+        $target = "../assets/img/" . basename($image);
 
-    if ($result) {
-        echo "Data film berhasil diupdate";
-        header("Location: ../index.php");
-        exit();
+        if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
+            $query = "UPDATE movies SET film='$film', genre='$genre', directors='$directors', actors='$actors', image='$image' WHERE id=$id";
+            if (mysqli_query($conn, $query)) {
+                header('Location: ../admin_dashboard.php');
+            } else {
+                echo "Kesalahan dalam mengubah film: " . mysqli_error($conn);
+            }
+        } else {
+            echo "Gagal mengupload gambar.";
+        }
     } else {
-        echo "Gagal mengupdate data film: " . mysqli_error($conn);
+        // No new image uploaded, only update other fields
+        $query = "UPDATE movies SET film='$film', genre='$genre', directors='$directors', actors='$actors' WHERE id=$id";
+        if (mysqli_query($conn, $query)) {
+            header('Location: ../admin_dashboard.php');
+        } else {
+            echo "Kesalahan dalam mengubah film: " . mysqli_error($conn);
+        }
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Update</title>
+    <title>Update Film</title>
 </head>
 <body>
-    <form method="POST" action="">
+    <form action="update.php" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="id" value="<?php echo $film['id']; ?>">
 
         <label for="film">Judul Film:</label><br>
@@ -57,10 +67,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <label for="directors">Director:</label><br>
         <input type="text" id="directors" name="directors" value="<?php echo $film['directors']; ?>"><br>
 
-        <label for="image">URL Gambar:</label><br>
-        <input type="text" id="image" name="image" value="<?php echo $film['image']; ?>"><br>
+        <label for="image">Gambar Film:</label><br>
+        <input type="file" id="image" name="image"><br>
+        <img src="../assets/img/<?php echo $film['image']; ?>" width="100"><br>
 
-        <input type="submit" value="Update">
+        <button type="submit">Edit Film</button>
     </form>
 </body>
 </html>
