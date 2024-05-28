@@ -10,7 +10,7 @@ if(isset($_GET['id'])) {
     $stmt->bind_param("i", $id);
 
     if ($stmt->execute()) {
-        header("Location: ../index.php");
+        header("Location: ../admin_dashboard.php");
         exit();
     } else {
         echo "Kesalahan dalam menghapus film: " . $stmt->error;

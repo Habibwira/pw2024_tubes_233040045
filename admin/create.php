@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $query = "INSERT INTO movies (film, genre, directors, actors, image) VALUES ('$film', '$genre', '$directors', '$actors', '$image')";
                 if (mysqli_query($conn, $query)) {
                     echo "Film berhasil ditambahkan.";
-                    header('Location: ../index.php');
+                    header('Location: ../admin_dashboard.php');
                     exit;
                 } else {
                     echo "Kesalahan dalam menambah film: " . mysqli_error($conn);
@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 echo "Gagal mengupload gambar.";
             }
         }
-    }
+    }  
 }
 ?>
 
