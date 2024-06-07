@@ -42,6 +42,31 @@ $isAdmin = isAdmin();
      max-height: 300px;
      object-fit: cover;
  }
+
+  /* Style untuk menampilkan dan menyembunyikan menu pada mobile */
+        .navbar {
+            display: none; /* Awalnya sembunyikan menu */
+        }
+
+        .navbar.active {
+            display: block; /* Tampilkan menu ketika kelas 'active' ditambahkan */
+        }
+
+        /* Tambahkan gaya untuk menu ikon */
+        #menu_icon {
+            display: block;
+            cursor: pointer;
+        }
+
+        /* Sembunyikan menu ikon pada tampilan desktop */
+        @media (min-width: 768px) {
+            #menu_icon {
+                display: none;
+            }
+            .navbar {
+                display: flex;
+            }
+        }
    </style>
 </head>
 
@@ -101,7 +126,7 @@ $isAdmin = isAdmin();
         <div class="home-text">
             <h1>Cineverse</h1>
             <h2>Rangkuman <br> Film </h2>
-            <a href="#" class="btn">Chit Chat</a>
+
         </div>
         <div class="home-img">
             <img src="assets/img/cinemalogo.jpg" alt="cinema logo">
@@ -122,7 +147,7 @@ $isAdmin = isAdmin();
             <span>About Us</span>
             <h2>We gathered the <br> film enthusiast</h2>
             <p>"Di mata seorang film enthusiast, setiap film adalah sebuah karya seni yang menunggu untuk ditemukan dan dinikmati sepenuhnya."</p>
-            <a href="#" class="btn">Learn More</a>
+            <a href="#" class="btn">Main View</a>
         </div>
     </section>
 
@@ -181,7 +206,7 @@ $isAdmin = isAdmin();
 <!-------call to action------->
 <section class="cta">
     <h2>"Fast and Furious adalah serangkaian film aksi yang menampilkan balapan mobil jalanan, pencurian, dan misi rahasia. Dimulai pada tahun 2001, seri ini telah berkembang menjadi salah satu waralaba film terbesar di dunia, dengan jutaan penggemar yang setia. Bergabunglah dengan Dominic Toretto, Brian O'Conner, Letty Ortiz, dan anggota tim lainnya dalam petualangan menegangkan yang menguji batas kecepatan, persahabatan, dan keluarga."<br></h2>
-    <a href="#" class="btn">Chit Chat</a>
+    <a href="#" class="btn">main view</a>
 </section>
 
 <!-------footer start------->
@@ -201,5 +226,17 @@ $isAdmin = isAdmin();
         </div>
     </div>
 </section>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const menuIcon = document.getElementById("menu_icon");
+        const navbar = document.querySelector(".navbar");
+
+        menuIcon.addEventListener("click", function() {
+            navbar.classList.toggle("active");
+        });
+    });
+</script>
 </body>
 </html>
