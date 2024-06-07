@@ -7,14 +7,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $password = $_POST['password'];
 
     // Query to check user credentials
-    $sql = "SELECT * FROM users WHERE username = '$username'";
-    $result = mysqli_query($conn, $sql);
+    $sql = "SELECT * FROM users WHERE username = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
     if (!$result) {
         die("Kesalahan dalam query: " . mysqli_error($conn));
     }
 
-    if (mysqli_num_rows($result) == 1) {
-        $user = mysqli_fetch_assoc($result);
+    if ($result->num_rows == 1) {
+        $user = $result->fetch_assoc();
         
         // Verify password
         if (password_verify($password, $user['password'])) {
@@ -30,10 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 echo "Anda tidak memiliki akses ke halaman admin.";
             }
         } else {
-            echo "Invalid username or password";
+            echo "Username atau password salah.";
         }
     } else {
-        echo "Invalid username or password";
+        echo "Username atau password salah.";
     }
 }
 ?>
@@ -43,16 +47,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>Login</title>
+    <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-    <form action="login.php" method="POST">
-        <label for="username">Username:</label>
-        <input type="text" name="username" id="username" required>
-        <br>
-        <label for="password">Password:</label>
-        <input type="password" name="password" id="password" required>
-        <br>
-        <button type="submit">Login</button>
-    </form>
+    <div class="login-container">
+        <h2>Login</h2>
+        <?php if(isset($error)): ?>
+            <p><?php echo $error; ?></p>
+        <?php endif; ?>
+        <form action="login.php" method="POST">
+            <label for="username">Username:</label>
+            <input type="text" name="username" id="username" required>
+            <br>
+            <label for="password">Password:</label>
+            <input type="password" name="password" id="password" required>
+            <br>
+            <button type="submit">Login</button>
+        </form>
+    </div>
 </body>
 </html>

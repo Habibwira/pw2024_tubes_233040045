@@ -3,6 +3,12 @@ session_start();
 include 'includes/session.php'; // Memasukkan file session.php yang berisi definisi requireLogin()
 include 'includes/db.php';
 
+requireLogin();
+if (!isAdmin()) {
+    header("Location: index.php");
+    exit();
+}
+
 // Query untuk menampilkan semua data film
 $sql = "SELECT * FROM movies";
 $result = mysqli_query($conn, $sql);
@@ -21,11 +27,10 @@ if (isset($_GET['search'])) {
     <meta charset="UTF-8">
     <title>Admin - Film List</title>
     <link rel="stylesheet" href="assets/style.css">
-     <style>
+    <style>
         /* CSS untuk memberikan warna pada tabel */
         table {
             width: 100%;
-            
         }
 
         /* CSS untuk memberikan warna pada header kolom */
@@ -41,6 +46,7 @@ if (isset($_GET['search'])) {
         <button type="submit">Cari</button>
     </form>
     <a href="admin/create.php">Tambah Film</a>
+    <a href="reviews/read.php">Lihat Reviews</a> <!-- Tautan baru untuk halaman review -->
     <table border="1">
         <tr>
             <th>ID</th>

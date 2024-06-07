@@ -34,7 +34,17 @@ $isAdmin = isAdmin();
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Chivo+Mono:wght@300&family=Inter:wght@300;400;500;600;700;800;900&family=Oswald&family=Poppins:ital,wght@1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+   <style>
+    .box-img img {
+     width: 100%;
+     height: auto;
+     max-width: 200px;
+     max-height: 300px;
+     object-fit: cover;
+ }
+   </style>
 </head>
+
 <body>
 <header>
     <a href="#" class="logo">CineVerse</a>
@@ -128,7 +138,7 @@ $isAdmin = isAdmin();
                     <div class="box">
                         <div class="box-img">
                             <a href="detail.php?id=<?php echo $film['id']; ?>">Detail</a>
-                            <img src="assets/img/<?php echo htmlspecialchars($film['image']); ?>" alt="Movie Image">
+                            <img src="assets/img/<?php echo htmlspecialchars($film['image']); ?>" width="200px" height="200px" alt="Movie Image">
                         </div>
                         <h2><?php echo htmlspecialchars($film['film']); ?></h2>
                         <h3><?php echo htmlspecialchars($film['directors']); ?></h3>

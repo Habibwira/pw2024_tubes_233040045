@@ -1,14 +1,21 @@
 <?php
-include 'includes/session.php';
+
 include 'includes/db.php';
 
-$search = '';
-if (isset($_GET['search'])) {
-    $search = mysqli_real_escape_string($conn, $_GET['search']);
-    $sql = "SELECT * FROM movies WHERE film LIKE '%$query%' OR genre LIKE '%$query%' OR actors LIKE '%$query%' OR directors LIKE '%$query%'";
-    $result = mysqli_query($conn, $query);
+$search = $_GET['q'];
+$sql = "SELECT * FROM movies WHERE film LIKE ? OR genre LIKE ? OR actors LIKE ? OR directors LIKE ?";
+$search_param = '%' . $search . '%';
+$stmt = $conn->prepare($sql);
+$stmt->bind_param('ssss', $search_param, $search_param, $search_param, $search_param);
+$stmt->execute();
+$result = $stmt->get_result();
 
+$movies = array();
+while ($row = $result->fetch_assoc()) {
+    $movies[] = $row;
 }
+
+echo json_encode($movies);
 ?>
 
 
