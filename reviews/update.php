@@ -1,32 +1,46 @@
 <?php
-include '../includes/session.php';
-include '../includes/db.php';
+session_start();
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+require_once '../includes/db.php';
+require_once '../includes/session.php';
+
 requireLogin();
+if (!isAdmin()) {
+    header("Location: ../index.php");
+    exit();
+}
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $id = $_POST['id'];
-    $review = $_POST['review'];
-    $rating = $_POST['rating'];
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
 
-    $sql = "UPDATE reviews SET review = ?, rating = ? WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param('sii', $review, $rating, $id);
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $movie_id = $_POST['movie_id'];
+        $rating = $_POST['rating'];
+        $duration = $_POST['duration'];
 
-    if ($stmt->execute()) {
-        $_SESSION['success'] = "Review updated successfully!";
-        header("Location: read.php");
-        exit();
+        $stmt = $conn->prepare("UPDATE reviews SET movie_id = ?, rating = ?, duration = ? WHERE id = ?");
+        $stmt->bind_param('issi', $movie_id, $rating, $duration, $id);
+
+        if ($stmt->execute()) {
+            header("Location: read.php");
+        } else {
+            echo "Error: " . $stmt->error;
+        }
     } else {
-        $_SESSION['error'] = "Error: " . $stmt->error;
+        $stmt = $conn->prepare("SELECT * FROM reviews WHERE id = ?");
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $review = $result->fetch_assoc();
+
+        $movies = mysqli_query($conn, "SELECT id, film FROM movies");
     }
 } else {
-    $id = $_GET['id'];
-    $sql = "SELECT * FROM reviews WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param('i', $id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $review = $result->fetch_assoc();
+    header("Location: read.php");
+    exit();
 }
 ?>
 
@@ -35,28 +49,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <title>Edit Review</title>
-    <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
-    <?php
-    if (isset($_SESSION['error'])) {
-        echo "<p>" . $_SESSION['error'] . "</p>";
-        unset($_SESSION['error']);
-    }
-    if (isset($_SESSION['success'])) {
-        echo "<p>" . $_SESSION['success'] . "</p>";
-        unset($_SESSION['success']);
-    }
-    ?>
-    <form action="update.php" method="POST">
-        <input type="hidden" name="id" value="<?php echo htmlspecialchars($review['id']); ?>">
-        <label for="review">Review:</label>
-        <textarea name="review" id="review" required><?php echo htmlspecialchars($review['review']); ?></textarea>
-        <br>
-        <label for="rating">Rating:</label>
-        <input type="number" name="rating" id="rating" min="1" max="5" value="<?php echo htmlspecialchars($review['rating']); ?>" required>
-        <br>
+    <h1>Edit Review</h1>
+    <form action="update.php?id=<?php echo $id; ?>" method="POST">
+        <div>
+            <label for="movie_id">Film:</label>
+            <select name="movie_id" id="movie_id" required>
+                <?php while ($movie = mysqli_fetch_assoc($movies)) { ?>
+                <option value="<?php echo $movie['id']; ?>" <?php if ($movie['id'] == $review['movie_id']) echo 'selected'; ?>><?php echo $movie['film']; ?></option>
+                <?php } ?>
+            </select>
+        </div>
+        <div>
+            <label for="rating">Rating:</label>
+            <input type="text" id="rating" name="rating" value="<?php echo $review['rating']; ?>" required>
+        </div>
+        <div>
+            <label for="duration">Duration:</label>
+            <input type="text" id="duration" name="duration" value="<?php echo $review['duration']; ?>" required>
+        </div>
         <button type="submit">Update Review</button>
     </form>
+    <a href="read.php">Kembali ke Daftar Reviews</a>
 </body>
 </html>

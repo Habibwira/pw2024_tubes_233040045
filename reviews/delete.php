@@ -1,21 +1,31 @@
 <?php
-include '../includes/session.php';
-include '../includes/db.php';
+session_start();
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+require_once '../includes/db.php';
+require_once '../includes/session.php';
+
 requireLogin();
+if (!isAdmin()) {
+    header("Location: ../index.php");
+    exit();
+}
 
 if (isset($_GET['id'])) {
     $id = $_GET['id'];
-    $sql = "DELETE FROM reviews WHERE id = ?";
-    $stmt = $conn->prepare($sql);
+
+    $stmt = $conn->prepare("DELETE FROM reviews WHERE id = ?");
     $stmt->bind_param('i', $id);
 
     if ($stmt->execute()) {
-        $_SESSION['success'] = "Review deleted successfully!";
+        header("Location: read.php");
     } else {
-        $_SESSION['error'] = "Error: " . $stmt->error;
+        echo "Error: " . $stmt->error;
     }
+} else {
+    header("Location: read.php");
+    exit();
 }
-
-header("Location: read.php");
-exit();
 ?>

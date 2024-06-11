@@ -1,49 +1,52 @@
 <?php
-include '../includes/session.php';
-include '../includes/db.php';
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+require_once '../includes/db.php';
+require_once '../includes/session.php';
+
 requireLogin();
+if (!isAdmin()) {
+    header("Location: ../index.php");
+    exit();
+}
 
-$user_id = $_SESSION['user_id'];
+// Query untuk menampilkan semua data ulasan
+$sql = "SELECT r.id, r.rating, r.duration, m.film FROM reviews r JOIN movies m ON r.movie_id = m.id";
+$result = mysqli_query($conn, $sql);
 
-$sql = "SELECT * FROM reviews WHERE user_id = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param('i', $user_id);
-$stmt->execute();
-$result = $stmt->get_result();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Your Reviews</title>
+    <title>Admin - Reviews</title>
     <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
-    <h1>Your Reviews</h1>
-    <a href="create.php">Add New Review</a>
-    <table>
-        <thead>
-            <tr>
-                <th>Movie ID</th>
-                <th>Review</th>
-                <th>Rating</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php while ($row = $result->fetch_assoc()): ?>
-                <tr>
-                    <td><?php echo htmlspecialchars($row['movie_id']); ?></td>
-                    <td><?php echo htmlspecialchars($row['review']); ?></td>
-                    <td><?php echo htmlspecialchars($row['rating']); ?></td>
-                    <td>
-                        <a href="update.php?id=<?php echo $row['id']; ?>">Edit</a>
-                        <a href="delete.php?id=<?php echo $row['id']; ?>" onclick="return confirm('Are you sure?')">Delete</a>
-                    </td>
-                </tr>
-            <?php endwhile; ?>
-        </tbody>
+    <h1>Daftar Reviews</h1>
+    <a href="../admin_dashboard.php">Kembali ke Dashboard</a>
+    <a href="create.php">Tambah Review</a>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>Film</th>
+            <th>Rating</th>
+            <th>Duration</th>
+            <th>Actions</th>
+        </tr>
+        <?php while ($review = mysqli_fetch_assoc($result)) { ?>
+        <tr>
+            <td><?php echo $review['id']; ?></td>
+            <td><?php echo $review['film']; ?></td>
+            <td><?php echo $review['rating']; ?></td>
+            <td><?php echo $review['duration']; ?></td>
+            <td>
+                <a href="update.php?id=<?php echo $review['id']; ?>">Edit</a>
+                <a href="delete.php?id=<?php echo $review['id']; ?>" onclick="return confirm('Apakah anda yakin ingin menghapus review ini?')">Delete</a>
+            </td>
+        </tr>
+        <?php } ?>
     </table>
 </body>
 </html>

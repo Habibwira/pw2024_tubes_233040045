@@ -1,57 +1,62 @@
 <?php
-include '../includes/session.php';
-include '../includes/db.php';
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+require_once '../includes/db.php';
+require_once '../includes/session.php';
+
 requireLogin();
+if (!isAdmin()) {
+    header("Location: ../index.php");
+    exit();
+}
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $user_id = $_SESSION['user_id'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $movie_id = $_POST['movie_id'];
-    $review = $_POST['review'];
     $rating = $_POST['rating'];
+    $duration = $_POST['duration'];
 
-    $sql = "INSERT INTO reviews (user_id, movie_id, review, rating) VALUES (?, ?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param('iisi', $user_id, $movie_id, $review, $rating);
+    $stmt = $conn->prepare("INSERT INTO reviews (movie_id, rating, duration) VALUES (?, ?, ?)");
+    $stmt->bind_param('iss', $movie_id, $rating, $duration);
 
     if ($stmt->execute()) {
-        $_SESSION['success'] = "Review added successfully!";
-        header("Location: ../index.php");
-        exit();
+        header("Location: read.php");
     } else {
-        $_SESSION['error'] = "Error: " . $stmt->error;
+        echo "Error: " . $stmt->error;
     }
 }
+
+$sql = "SELECT id, film FROM movies";
+$result = mysqli_query($conn, $sql);
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Add Review</title>
-    <link rel="stylesheet" href="../assets/style.css">
+    <title>Tambah Review</title>
 </head>
 <body>
-    <?php
-    if (isset($_SESSION['error'])) {
-        echo "<p>" . $_SESSION['error'] . "</p>";
-        unset($_SESSION['error']);
-    }
-    if (isset($_SESSION['success'])) {
-        echo "<p>" . $_SESSION['success'] . "</p>";
-        unset($_SESSION['success']);
-    }
-    ?>
+    <h1>Tambah Review</h1>
     <form action="create.php" method="POST">
-        <label for="movie_id">Movie ID:</label>
-        <input type="number" name="movie_id" id="movie_id" required>
-        <br>
-        <label for="review">Review:</label>
-        <textarea name="review" id="review" required></textarea>
-        <br>
-        <label for="rating">Rating:</label>
-        <input type="number" name="rating" id="rating" min="1" max="5" required>
-        <br>
-        <button type="submit">Add Review</button>
+        <div>
+            <label for="movie_id">Film:</label>
+            <select name="movie_id" id="movie_id" required>
+                <?php while ($movie = mysqli_fetch_assoc($result)) { ?>
+                <option value="<?php echo $movie['id']; ?>"><?php echo $movie['film']; ?></option>
+                <?php } ?>
+            </select>
+        </div>
+        <div>
+            <label for="rating">Rating:</label>
+            <input type="text" id="rating" name="rating" required>
+        </div>
+        <div>
+            <label for="duration">Duration:</label>
+            <input type="text" id="duration" name="duration" required>
+        </div>
+        <button type="submit">Tambah Review</button>
     </form>
+    <a href="read.php">Kembali ke Daftar Reviews</a>
 </body>
 </html>

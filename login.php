@@ -1,68 +1,60 @@
 <?php
-session_start();
 include 'includes/db.php';
+include 'includes/session.php';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = mysqli_real_escape_string($conn, $_POST['username']);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = $_POST['username'];
     $password = $_POST['password'];
 
-    // Query to check user credentials
-    $sql = "SELECT * FROM users WHERE username = ?";
-    $stmt = $conn->prepare($sql);
+    $stmt = $conn->prepare("SELECT id, username, password, role FROM users WHERE username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
-    $result = $stmt->get_result();
+    $stmt->store_result();
+    $stmt->bind_result($id, $db_username, $db_password, $role);
 
-    if (!$result) {
-        die("Kesalahan dalam query: " . mysqli_error($conn));
-    }
+    if ($stmt->num_rows > 0) {
+        $stmt->fetch();
+        if (password_verify($password, $db_password)) {
+            $_SESSION['user_id'] = $id; // Menambahkan user_id ke session
+            $_SESSION['username'] = $db_username;
+            $_SESSION['role'] = $role;
 
-    if ($result->num_rows == 1) {
-        $user = $result->fetch_assoc();
-        
-        // Verify password
-        if (password_verify($password, $user['password'])) {
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
-            $_SESSION['role'] = $user['role'];
-
-            // Check if the user is admin
-            if ($user['role'] === 'admin') {
-                header("Location: admin_dashboard.php");
-                exit;
-            } else {
-                echo "Anda tidak memiliki akses ke halaman admin.";
-            }
+            // Redirect ke admin_dashboard.php untuk semua pengguna
+            header("Location: admin_dashboard.php");
+            exit();
         } else {
-            echo "Username atau password salah.";
+            echo "Password salah.";
         }
     } else {
-        echo "Username atau password salah.";
+        echo "Username tidak ditemukan.";
     }
+
+    $stmt->close();
+    $conn->close();
 }
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Login</title>
-    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" type="text/css" href="assets/style.css">
 </head>
 <body>
-    <div class="login-container">
+    <div class="container">
         <h2>Login</h2>
-        <?php if(isset($error)): ?>
-            <p><?php echo $error; ?></p>
-        <?php endif; ?>
         <form action="login.php" method="POST">
-            <label for="username">Username:</label>
-            <input type="text" name="username" id="username" required>
-            <br>
-            <label for="password">Password:</label>
-            <input type="password" name="password" id="password" required>
-            <br>
-            <button type="submit">Login</button>
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Login">
+            </div>
         </form>
     </div>
 </body>

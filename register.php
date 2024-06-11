@@ -1,19 +1,40 @@
 <?php
-session_start();
 include 'includes/db.php';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = mysqli_real_escape_string($conn, $_POST['username']);
-    $password = mysqli_real_escape_string($conn, $_POST['password']);
-    $sql = "INSERT INTO users (username, password) VALUES ('$username', '$password')";
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = $_POST['username'];
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT); // Enkripsi password sebelum disimpan
 
-    if (mysqli_query($conn, $sql)) {
-        echo "Registrasi berhasil. Silakan <a href='login.php'>login</a>.";
-    } else {
-        echo "Error: " . $sql . "<br>" . mysqli_error($conn);
+    // Query untuk memeriksa apakah username sudah digunakan
+    $stmt_check = $conn->prepare("SELECT id FROM users WHERE username = ?");
+    $stmt_check->bind_param("s", $username);
+    $stmt_check->execute();
+    $stmt_check->store_result();
+
+    // Jika username sudah digunakan, tampilkan pesan error
+    if ($stmt_check->num_rows > 0) {
+        echo "Username sudah digunakan. Silakan coba dengan username lain.";
+        exit();
     }
+
+    // Query untuk menyimpan data pengguna baru ke database
+    $stmt = $conn->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, 'user')");
+    $stmt->bind_param("ss", $username, $password);
+
+    // Eksekusi query
+    if ($stmt->execute()) {
+        // Redirect ke halaman login setelah pendaftaran berhasil
+        header("Location: login.php");
+        exit();
+    } else {
+        echo "Pendaftaran gagal. Silakan coba lagi.";
+    }
+
+    $stmt->close();
+    $conn->close();
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">

@@ -75,7 +75,7 @@ $isAdmin = isAdmin();
 
 <body>
 <header>
-    <a href="#" class="logo">CineVerse</a>
+     <a href="#" class="logo">CineVerse</a>
     <div class="bx bx-menu" id="menu_icon"></div>
 
     <ul class="navbar">
@@ -88,10 +88,27 @@ $isAdmin = isAdmin();
             <li><a href="admin/create.php">Add film</a></li>        
             <li><a href="logout.php">Logout</a></li>
         <?php else: ?>
+            <li><a href="registrasi/registrasi.php">Register</a></li>
             <li><a href="login.php">Login</a></li>
         <?php endif; ?>
     </ul>
 </header>
+
+<ul class="navbar">
+    <li><a href="#home">Home</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#menu">Menu</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <?php if ($isAdmin): ?>
+        <li><a href="admin/create.php">Add film</a></li>        
+        <li><a href="logout.php">Logout</a></li>
+    <?php else: ?>
+        <li><a href="registrasi/registrasi.php">Register</a></li>
+        <li><a href="login.php">Login</a></li>
+    <?php endif; ?>
+</ul>
+
 
 <?php if ($isAdmin): ?>
     <!-- Halaman Admin -->

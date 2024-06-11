@@ -1,52 +1,50 @@
 <?php
-include('../includes/db.php');
-include('../includes/session.php');
+include '../includes/db.php';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'];
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $role = 'admin'; // Menetapkan role sebagai admin
+    $password = $_POST['password'];
 
-    $sql = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param('sss', $username, $password, $role);
+    // Hash password
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+    // Prepare and bind
+    $stmt = $conn->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, 'admin')");
+    $stmt->bind_param("ss", $username, $hashed_password);
 
     if ($stmt->execute()) {
-        $_SESSION['success'] = "Registrasi berhasil!";
-        header("Location: ../login.php");
-        exit();
+        echo "Registrasi berhasil. <a href='../login.php'>Silakan login</a>";
     } else {
-        $_SESSION['error'] = "Error: " . $stmt->error;
+        echo "Terjadi kesalahan: " . $stmt->error;
     }
+
+    $stmt->close();
+    $conn->close();
 }
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Registrasi Admin</title>
-    <link rel="stylesheet" href="../assets/style.css">
+    <title>Registrasi</title>
+    <link rel="stylesheet" type="text/css" href="../assets/style.css">
 </head>
 <body>
-    <?php
-    if (isset($_SESSION['error'])) {
-        echo "<p>" . $_SESSION['error'] . "</p>";
-        unset($_SESSION['error']);
-    }
-    if (isset($_SESSION['success'])) {
-        echo "<p>" . $_SESSION['success'] . "</p>";
-        unset($_SESSION['success']);
-    }
-    ?>
-    <form action="registrasi.php" method="POST">
-        <label for="username">Username:</label>
-        <input type="text" name="username" id="username" required>
-        <br>
-        <label for="password">Password:</label>
-        <input type="password" name="password" id="password" required>
-        <br>
-        <button type="submit">Register</button>
-    </form>
+    <div class="container">
+        <h2>Registrasi</h2>
+        <form action="registrasi.php" method="POST">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Registrasi">
+            </div>
+        </form>
+    </div>
 </body>
 </html>
